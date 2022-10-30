@@ -1,0 +1,152 @@
+```{r}
+library(dplyr)
+library(ggplot2)
+library(shiny)
+library(shinydashboard)
+library(readr)
+library(magrittr)
+library(tidyverse)
+library(glue)
+library(plotly)
+library(scales)
+```
+
+
+```{r}
+imdb <- read_csv("imdb_top_1000.csv")
+```
+```{r}
+imdb <- select(imdb, -c("Poster_Link", "Overview"))
+```
+
+```{r}
+colSums(is.na(imdb))
+imdb <- na.exclude(imdb)
+```
+
+```{r}
+imdb |> head(2)
+```
+
+
+
+```{r}
+
+imdb_revenue <- 
+  imdb |> 
+  filter(Certificate == "A") |> 
+  group_by(Genre) |> 
+  summarise(revenue = sum(Gross)) |> 
+  arrange(desc(revenue)) |> 
+  top_n(20)
+
+imdb_revenue <- 
+  imdb_revenue |> 
+  mutate(label = glue("Total Revenue : {comma(revenue)}
+                      Genre Movie : {Genre}"))
+
+plot1 <- ggplot(imdb_revenue,
+                    aes(x = revenue,
+                        y = reorder(Genre,revenue),
+                        text = "label")) + 
+      geom_col(aes(fill=revenue))+
+      scale_fill_gradient(low = "orange", high = "red")+
+      scale_x_continuous(labels = comma)+
+      labs(
+        title = "Top 20 Genre Based on Revenue",
+        x = 'Revenue',
+        y = "Genre")+
+      theme_minimal()+
+      theme(panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank(),
+            legend.position = "none",
+            plot.title = element_text(hjust = 0.4))
+  
+ggplotly(plot1, tooltip = "text")
+```
+
+```{r}
+imdb_metascore <- 
+  imdb |> 
+  filter(Certificate == "A") |> 
+  group_by(Genre) |> 
+  summarise(mscore = sum(Meta_score)) |> 
+  arrange(desc(mscore)) |> 
+  top_n(20)
+
+imdb_metascore <- 
+  imdb_metascore |> 
+  mutate(label = glue("Total Meta Score : {comma(mscore)}
+                      Genre Movie : {Genre}"))
+
+plot2 <- ggplot(imdb_metascore,
+                    aes(x = mscore,
+                        y = reorder(Genre, mscore),
+                        text = "label")) + 
+      geom_col(aes(fill=mscore))+
+      scale_fill_gradient(low = "orange", high = "red")+
+      scale_x_continuous(labels = comma)+
+      labs(
+        title = "Top 20 Genre Based on Meta Score",
+        x = 'Meta Score',
+        y = "Genre")+
+      theme_minimal()+
+      theme(panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank(),
+            legend.position = "none",
+            plot.title = element_text(hjust = 0.4))
+  
+ggplotly(plot2, tooltip = "text")
+```
+```{r}
+str(imdb)
+```
+
+```{r}
+imdb_rating <- 
+  imdb |> 
+  filter(Star1 == "Al Pacino")
+```
+
+```{r}
+imdb_rating <- 
+  imdb_rating |> 
+  mutate(label = glue("Rating = {IMDB_Rating}
+                      Revenue = {comma(Gross)}"))
+```
+
+
+
+
+```{r}
+ggplot(imdb, aes(x = IMDB_Rating,
+                 y = Gross,
+                 col = IMDB_Rating,
+                 text = "label"
+                 ))+
+  geom_jitter(aes(size = Gross))+
+  scale_y_continuous(labels = comma)+     
+  labs(
+        title = "Value of each movie on the axis of its revenue and rating",
+        x = 'Rating',
+        y = "Revenue")+
+      theme_minimal()+
+      theme(panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank(),
+            legend.position = "none",
+            plot.title = element_text(hjust = 0.4))
+```
+```{r}
+unique(imdb$Star1)
+```
+
+```{r}
+unique(imdb$Meta_score)
+```
+
+```{r}
+imdb
+```
+
+
+
